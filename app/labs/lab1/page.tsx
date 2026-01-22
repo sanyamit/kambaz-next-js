@@ -262,7 +262,7 @@ This is the third paragraph. Wrap each paragraph with the paragraph tag to tell 
         <a href="https://www.lipsum.com" id="wd-lipsum"> click here </a>
          to get dummy text<br/>
          This is the
-        <a href="https://github.com/sanyamit/kambaz-next-js" id="wd-lipsum"> link </a>
+        <a href="https://github.com/sanyamit/kambaz-next-js" id="wd-github"> link </a>
          to my github repo<br/>
       </div>
     
