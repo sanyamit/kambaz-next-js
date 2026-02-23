@@ -162,12 +162,16 @@ The Kanbas application should include a link to navigate back to the landing pag
 
         {/* Buttons */}
         <div className="d-flex justify-content-end gap-2 mt-4">
-          <Button as={Link} href={backToAssignments} variant="secondary">
-            Cancel
-          </Button>
-          <Button as={Link} href={backToAssignments} variant="danger">
-            Save
-          </Button>
+          <Link href={backToAssignments} className="text-decoration-none">
+            <Button variant="secondary">
+              Cancel
+            </Button>
+          </Link>
+          <Link href={backToAssignments} className="text-decoration-none">
+            <Button variant="danger">
+              Save
+            </Button>
+          </Link>
         </div>
       </Form>
     </div>
