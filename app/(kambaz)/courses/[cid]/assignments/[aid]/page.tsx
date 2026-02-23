@@ -9,7 +9,7 @@ export default function AssignmentEditor() {
   const { cid, aid } = useParams<{ cid: string; aid: string }>();
 
   const assignment = db.assignments.find(
-    (a: any) => a._id === aid && a.course === cid
+    (a) => a._id === aid && a.course === cid
   );
   const backToAssignments = `/courses/${cid}/assignments`;
 
