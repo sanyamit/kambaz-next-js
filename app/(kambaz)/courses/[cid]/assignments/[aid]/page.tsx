@@ -1,15 +1,25 @@
 "use client";
 
 import { Button, Col, Form, Row } from "react-bootstrap";
+import { useParams } from "next/navigation";
+import * as db from "../../../../database";
+import Link from "next/link";
 
 export default function AssignmentEditor() {
+  const { cid, aid } = useParams<{ cid: string; aid: string }>();
+
+  const assignment = db.assignments.find(
+    (a: any) => a._id === aid && a.course === cid
+  );
+  const backToAssignments = `/courses/${cid}/assignments`;
+
   return (
     <div id="wd-assignments-editor" className="p-3">
       <Form>
         {/* Assignment Name */}
         <Form.Group className="mb-3" controlId="wd-name">
           <Form.Label>Assignment Name</Form.Label>
-          <Form.Control defaultValue="A1" />
+          <Form.Control defaultValue={assignment?.title ?? "A1"} />
         </Form.Group>
 
         {/* Description */}
@@ -17,7 +27,9 @@ export default function AssignmentEditor() {
           <Form.Control
             as="textarea"
             rows={8}
-            defaultValue={`The assignment is available online
+            defaultValue={
+              assignment?.description ??
+              `The assignment is available online
 
 Submit a link to the landing page of your Web application running on Netlify.
 
@@ -27,7 +39,8 @@ The landing page should include the following:
 • Link to the Kanbas application
 • Links to all relevant source code repositories
 
-The Kanbas application should include a link to navigate back to the landing page.`}
+The Kanbas application should include a link to navigate back to the landing page.`
+            }
           />
         </Form.Group>
 
@@ -37,7 +50,11 @@ The Kanbas application should include a link to navigate back to the landing pag
             Points
           </Form.Label>
           <Col sm={10}>
-            <Form.Control type="number" defaultValue={100} style={{ maxWidth: 300 }} />
+            <Form.Control
+              type="number"
+              defaultValue={assignment?.points ?? 100}
+              style={{ maxWidth: 300 }}
+            />
           </Col>
         </Form.Group>
 
@@ -47,7 +64,10 @@ The Kanbas application should include a link to navigate back to the landing pag
             Assignment Group
           </Form.Label>
           <Col sm={10}>
-            <Form.Select defaultValue="ASSIGNMENTS" style={{ maxWidth: 300 }}>
+            <Form.Select
+              defaultValue={assignment?.group ?? "ASSIGNMENTS"}
+              style={{ maxWidth: 300 }}
+            >
               <option value="ASSIGNMENTS">ASSIGNMENTS</option>
               <option value="QUIZZES">QUIZZES</option>
               <option value="EXAMS">EXAMS</option>
@@ -62,7 +82,10 @@ The Kanbas application should include a link to navigate back to the landing pag
             Display Grade as
           </Form.Label>
           <Col sm={10}>
-            <Form.Select defaultValue="PERCENTAGE" style={{ maxWidth: 300 }}>
+            <Form.Select
+              defaultValue={assignment?.displayGradeAs ?? "PERCENTAGE"}
+              style={{ maxWidth: 300 }}
+            >
               <option value="PERCENTAGE">Percentage</option>
               <option value="POINTS">Points</option>
               <option value="LETTER">Letter</option>
@@ -76,7 +99,10 @@ The Kanbas application should include a link to navigate back to the landing pag
             Submission Type
           </Form.Label>
           <Col sm={10}>
-            <Form.Select defaultValue="ONLINE" style={{ maxWidth: 300 }}>
+            <Form.Select
+              defaultValue={assignment?.submissionType ?? "ONLINE"}
+              style={{ maxWidth: 300 }}
+            >
               <option value="ONLINE">Online</option>
               <option value="ON_PAPER">On Paper</option>
             </Form.Select>
@@ -129,20 +155,29 @@ The Kanbas application should include a link to navigate back to the landing pag
 
               <Form.Group className="mb-3" controlId="wd-due-date">
                 <Form.Label className="fw-bold">Due</Form.Label>
-                <Form.Control type="date" defaultValue="2024-05-13" />
+                <Form.Control
+                  type="date"
+                  defaultValue={assignment?.dueDate ?? "2024-05-13"}
+                />
               </Form.Group>
 
               <Row>
                 <Col>
                   <Form.Group className="mb-0" controlId="wd-available-from">
                     <Form.Label className="fw-bold">Available from</Form.Label>
-                    <Form.Control type="date" defaultValue="2024-05-06" />
+                    <Form.Control
+                      type="date"
+                      defaultValue={assignment?.availableFrom ?? "2024-05-06"}
+                    />
                   </Form.Group>
                 </Col>
                 <Col>
                   <Form.Group className="mb-0" controlId="wd-available-until">
                     <Form.Label className="fw-bold">Until</Form.Label>
-                    <Form.Control type="date" defaultValue="2024-05-20" />
+                    <Form.Control
+                      type="date"
+                      defaultValue={assignment?.availableUntil ?? "2024-05-20"}
+                    />
                   </Form.Group>
                 </Col>
               </Row>
@@ -152,8 +187,12 @@ The Kanbas application should include a link to navigate back to the landing pag
 
         {/* Buttons */}
         <div className="d-flex justify-content-end gap-2 mt-4">
-          <Button variant="secondary">Cancel</Button>
-          <Button variant="danger">Save</Button>
+          <Button as={Link} href={backToAssignments} variant="secondary">
+            Cancel
+          </Button>
+          <Button as={Link} href={backToAssignments} variant="danger">
+            Save
+          </Button>
         </div>
       </Form>
     </div>

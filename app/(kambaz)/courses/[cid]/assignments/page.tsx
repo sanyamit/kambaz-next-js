@@ -1,13 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import {Button, FormControl, InputGroup, ListGroup, ListGroupItem} from "react-bootstrap";
+import {
+  Button,
+  FormControl,
+  InputGroup,
+  ListGroup,
+  ListGroupItem,
+} from "react-bootstrap";
 import { FaPlus, FaSearch, FaCheckCircle } from "react-icons/fa";
 import { BsGripVertical } from "react-icons/bs";
 import { IoEllipsisVertical } from "react-icons/io5";
 import { MdAssignment } from "react-icons/md";
+import { useParams } from "next/navigation";
+import * as db from "../../../database";
 
 export default function Assignments() {
+  const { cid } = useParams<{ cid: string }>();
+
+  const assignmentsForCourse = db.assignments.filter(
+    (a: any) => a.course === cid
+  );
+
   return (
     <div id="wd-assignments">
       {/* Top controls row */}
@@ -17,19 +31,12 @@ export default function Assignments() {
             <InputGroup.Text>
               <FaSearch />
             </InputGroup.Text>
-            <FormControl
-              placeholder="Search..."
-              id="wd-search-assignment"
-            />
+            <FormControl placeholder="Search..." id="wd-search-assignment" />
           </InputGroup>
         </div>
 
         <div className="ms-auto text-nowrap">
-          <Button
-            variant="light"
-            className="me-2"
-            id="wd-add-assignment-group"
-          >
+          <Button variant="light" className="me-2" id="wd-add-assignment-group">
             <FaPlus className="me-1" />
             Group
           </Button>
@@ -58,74 +65,35 @@ export default function Assignments() {
 
       {/* Assignment list */}
       <ListGroup className="rounded-0" id="wd-assignment-list">
-        {/* A1 */}
-        <ListGroupItem className="wd-assignment-list-item d-flex align-items-start">
-          <BsGripVertical className="me-2 fs-4 mt-1" />
-          <MdAssignment className="me-3 fs-3 text-success mt-1" />
+        {assignmentsForCourse.map((a: any) => (
+          <ListGroupItem
+            key={a._id}
+            className="wd-assignment-list-item d-flex align-items-start"
+          >
+            <BsGripVertical className="me-2 fs-4 mt-1" />
+            <MdAssignment className="me-3 fs-3 text-success mt-1" />
 
-          <div className="flex-fill">
-            <Link
-              href="/courses/1234/assignments/123"
-              className="wd-assignment-link fw-bold text-decoration-none text-dark"
-            >
-              A1
-            </Link>
-            <div className="text-danger small">Multiple Modules</div>
-            <div className="text-secondary small">
-              <b>Not available until</b> May 6 at 12:00am | <b>Due</b> May 13 at
-              11:59pm | 100 pts
+            <div className="flex-fill">
+              <Link
+                href={`/courses/${cid}/assignments/${a._id}`}
+                className="wd-assignment-link fw-bold text-decoration-none text-dark"
+              >
+                {a.title}
+              </Link>
+
+              <div className="text-danger small">Multiple Modules</div>
+
+              <div className="text-secondary small">
+                {/* optional fields if you add them later */}
+                <b>Not available until</b> May 6 at 12:00am | <b>Due</b> May 13 at
+                11:59pm | 100 pts
+              </div>
             </div>
-          </div>
 
-          <FaCheckCircle className="text-success fs-4 mt-1 me-3" />
-          <IoEllipsisVertical className="fs-4 mt-1" />
-        </ListGroupItem>
-
-        {/* A2 */}
-        <ListGroupItem className="wd-assignment-list-item d-flex align-items-start">
-          <BsGripVertical className="me-2 fs-4 mt-1" />
-          <MdAssignment className="me-3 fs-3 text-success mt-1" />
-
-          <div className="flex-fill">
-            <Link
-              href="/courses/1234/assignments/234"
-              className="wd-assignment-link fw-bold text-decoration-none text-dark"
-            >
-              A2
-            </Link>
-            <div className="text-danger small">Multiple Modules</div>
-            <div className="text-secondary small">
-              <b>Not available until</b> May 13 at 12:00am | <b>Due</b> May 20 at
-              11:59pm | 100 pts
-            </div>
-          </div>
-
-          <FaCheckCircle className="text-success fs-4 mt-1 me-3" />
-          <IoEllipsisVertical className="fs-4 mt-1" />
-        </ListGroupItem>
-
-        {/* A3 */}
-        <ListGroupItem className="wd-assignment-list-item d-flex align-items-start">
-          <BsGripVertical className="me-2 fs-4 mt-1" />
-          <MdAssignment className="me-3 fs-3 text-success mt-1" />
-
-          <div className="flex-fill">
-            <Link
-              href="/courses/1234/assignments/345"
-              className="wd-assignment-link fw-bold text-decoration-none text-dark"
-            >
-              A3
-            </Link>
-            <div className="text-danger small">Multiple Modules</div>
-            <div className="text-secondary small">
-              <b>Not available until</b> May 20 at 12:00am | <b>Due</b> May 27 at
-              11:59pm | 100 pts
-            </div>
-          </div>
-
-          <FaCheckCircle className="text-success fs-4 mt-1 me-3" />
-          <IoEllipsisVertical className="fs-4 mt-1" />
-        </ListGroupItem>
+            <FaCheckCircle className="text-success fs-4 mt-1 me-3" />
+            <IoEllipsisVertical className="fs-4 mt-1" />
+          </ListGroupItem>
+        ))}
       </ListGroup>
     </div>
   );
