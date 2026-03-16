@@ -5,7 +5,7 @@ import * as db from "../database";
 import { Row, Col, Card, CardImg, CardBody, CardTitle, CardText, Button, FormControl } from "react-bootstrap";
 import { v4 as uuidv4 } from "uuid";
 import { useDispatch, useSelector } from "react-redux";
-import { addNewCourse, deleteCourse, updateCourse, setCourses } from "../courses/reducer";
+import { addNewCourse, deleteCourse, updateCourse } from "../courses/reducer";
 import { RootState } from "../store";
 import { enroll, unenroll } from "../enrollmentsReducer";
 
