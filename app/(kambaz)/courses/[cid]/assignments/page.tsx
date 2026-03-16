@@ -1,100 +1,106 @@
 "use client";
-
-import Link from "next/link";
-import {
-  Button,
-  FormControl,
-  InputGroup,
-  ListGroup,
-  ListGroupItem,
-} from "react-bootstrap";
-import { FaPlus, FaSearch, FaCheckCircle } from "react-icons/fa";
+import { useParams, useRouter } from "next/navigation";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "../../../store";
+import { deleteAssignment } from "./reducer";
+import { ListGroup, ListGroupItem } from "react-bootstrap";
 import { BsGripVertical } from "react-icons/bs";
-import { IoEllipsisVertical } from "react-icons/io5";
-import { MdAssignment } from "react-icons/md";
-import { useParams } from "next/navigation";
-import * as db from "../../../database";
+import { SlNote } from "react-icons/sl";
+import { VscTriangleDown } from "react-icons/vsc";
+import { FaTrash } from "react-icons/fa";
+import Link from "next/link";
+import AssignmentControlButtons from "./AssignmentControlButtons";
+import AssignmentsControls from "./assignmentControls";
 
 export default function Assignments() {
-  const { cid } = useParams<{ cid: string }>();
+  const { cid } = useParams();
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const { assignments } = useSelector(
+    (state: RootState) => state.assignmentsReducer,
+  );
+  const courseAssignments = assignments.filter((a: any) => a.course === cid);
 
-  const assignmentsForCourse = db.assignments.filter(
-    (a) => a.course === cid
+  const { currentUser } = useSelector(
+    (state: RootState) => state.accountReducer,
   );
 
+  const handleDelete = (assignmentId: string) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to remove this assignment?",
+    );
+    if (confirmed) {
+      dispatch(deleteAssignment(assignmentId));
+    }
+  };
+
   return (
-    <div id="wd-assignments">
-      {/* Top controls row */}
-      <div className="d-flex align-items-center mb-4">
-        <div className="flex-fill me-3" style={{ maxWidth: 350 }}>
-          <InputGroup>
-            <InputGroup.Text>
-              <FaSearch />
-            </InputGroup.Text>
-            <FormControl placeholder="Search..." id="wd-search-assignment" />
-          </InputGroup>
-        </div>
-
-        <div className="ms-auto text-nowrap">
-          <Button variant="light" className="me-2" id="wd-add-assignment-group">
-            <FaPlus className="me-1" />
-            Group
-          </Button>
-
-          <Button variant="danger" id="wd-add-assignment">
-            <FaPlus className="me-1" />
-            Assignment
-          </Button>
-        </div>
-      </div>
-
-      {/* Assignments header row */}
-      <ListGroup className="rounded-0 mb-3">
-        <ListGroupItem className="d-flex align-items-center bg-light">
-          <BsGripVertical className="me-2 fs-4" />
-          <span className="fw-bold">ASSIGNMENTS</span>
-
-          <span className="ms-auto me-2 text-secondary small border rounded px-2 py-1">
-            40% of Total
-          </span>
-
-          <FaPlus className="me-2" />
-          <IoEllipsisVertical className="fs-4" />
-        </ListGroupItem>
-      </ListGroup>
-
-      {/* Assignment list */}
-      <ListGroup className="rounded-0" id="wd-assignment-list">
-        {assignmentsForCourse.map((a) => (
-          <ListGroupItem
-            key={a._id}
-            className="wd-assignment-list-item d-flex align-items-start"
-          >
-            <BsGripVertical className="me-2 fs-4 mt-1" />
-            <MdAssignment className="me-3 fs-3 text-success mt-1" />
-
-            <div className="flex-fill">
-              <Link
-                href={`/courses/${cid}/assignments/${a._id}`}
-                className="wd-assignment-link fw-bold text-decoration-none text-dark"
-              >
-                {a.title}
-              </Link>
-
-              <div className="text-danger small">Multiple Modules</div>
-
-              <div className="text-secondary small">
-                {/* optional fields if you add them later */}
-                <b>Not available until</b> May 6 at 12:00am | <b>Due</b> May 13 at
-                11:59pm | 100 pts
+    <div>
+      {currentUser?.role === "FACULTY" && (
+        <AssignmentsControls
+          addAssignment={() => router.push(`/courses/${cid}/assignments/new`)}
+        />
+      )}
+      <div className="mt-4">
+        <ListGroup className="rounded-0" id="wd-modules">
+          <ListGroupItem className="wd-module p-0 mb-5 fs-5 border-gray">
+            <div className="wd-title p-3 ps-2 bg-secondary d-flex justify-content-between align-items-center">
+              <div>
+                <BsGripVertical className="me-2 fs-3" />
+                <VscTriangleDown className="me-2 fs-5" />
+                ASSIGNMENTS
+              </div>
+              <div className="d-flex align-items-center">
+                <span className="border rounded-pill px-3 py-1 me-2">
+                  40% of Total
+                </span>
+                <AssignmentControlButtons />
               </div>
             </div>
-
-            <FaCheckCircle className="text-success fs-4 mt-1 me-3" />
-            <IoEllipsisVertical className="fs-4 mt-1" />
+            <ListGroup className="wd-lessons rounded-0">
+              {courseAssignments.map((assignment: any) => (
+                <ListGroupItem
+                  key={assignment._id}
+                  className="wd-lesson p-3 ps-1"
+                >
+                  <div className="d-flex align-items-center">
+                    <BsGripVertical className="me-2 fs-3" />
+                    <SlNote className="me-2 fs-1 mt-1 text-success" />
+                    <div className="flex-grow-1">
+                      <div className="d-flex justify-content-between align-items-center">
+                        <Link
+                          href={`/courses/${cid}/assignments/${assignment._id}`}
+                          className="text-dark text-decoration-none fw-bold"
+                        >
+                          {assignment.title}
+                        </Link>
+                        {currentUser?.role === "FACULTY" && (
+                          <FaTrash
+                            className="text-danger"
+                            style={{ cursor: "pointer" }}
+                            onClick={() => handleDelete(assignment._id)}
+                            id="wd-delete-assignment-click"
+                          />
+                        )}
+                      </div>
+                      <div className="small mt-1">
+                        <span className="text-danger">Multiple Modules</span>
+                        <span className="text-muted">
+                          {" "}
+                          | <b>Not available until</b>{" "}
+                          {assignment.availableFromDate} at 12:00am | <b>Due</b>{" "}
+                          {assignment.dueDate} at 11:59pm | {assignment.points}{" "}
+                          pts
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </ListGroupItem>
+              ))}
+            </ListGroup>
           </ListGroupItem>
-        ))}
-      </ListGroup>
+        </ListGroup>
+      </div>
     </div>
   );
 }
