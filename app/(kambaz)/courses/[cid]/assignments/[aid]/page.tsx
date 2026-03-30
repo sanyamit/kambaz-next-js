@@ -1,22 +1,24 @@
 "use client";
 import { useParams, useRouter } from "next/navigation";
-import { useSelector, useDispatch } from "react-redux";
-import { RootState } from "../../../../store";
-import { addAssignment, updateAssignment } from "../reducer";
+import { useDispatch, useSelector } from "react-redux";
 import { useState, useEffect } from "react";
 import {Form, FormLabel, FormControl, FormSelect, FormCheck, Button, Row, Col } from "react-bootstrap";
 
+import * as client from "../client";
+import { setAssignments } from "../reducer";
+import { RootState } from "../../../../store";
+
 export default function AssignmentEditor() {
-  const { cid, aid } = useParams();
+  const { cid, aid } = useParams<{ cid: string; aid?: string }>();
   const router = useRouter();
   const dispatch = useDispatch();
-  const { assignments } = useSelector(
-    (state: RootState) => state.assignmentsReducer,
+
+  const { currentUser } = useSelector(
+    (state: RootState) => state.accountReducer,
   );
+  const canEdit = currentUser?.role === "FACULTY";
 
-  const existingAssignment = assignments.find((a: any) => a._id === aid);
-
-  const [assignment, setAssignment] = useState<any>({
+  const baseAssignment = {
     title: "New Assignment",
     description: "",
     points: 100,
@@ -24,21 +26,56 @@ export default function AssignmentEditor() {
     availableFromDate: "",
     availableUntilDate: "",
     course: cid,
-  });
+  };
+
+  const [assignment, setAssignment] = useState<any>(baseAssignment);
 
   useEffect(() => {
-    if (existingAssignment) {
-      setAssignment(existingAssignment);
-    }
-  }, [aid]);
+    if (!cid) return;
 
-  const handleSave = () => {
-    if (existingAssignment) {
-      dispatch(updateAssignment(assignment));
-    } else {
-      dispatch(addAssignment({ ...assignment, course: cid }));
+    // New assignment screen: keep defaults.
+    if (!aid) {
+      setAssignment({ ...baseAssignment, course: cid });
+      return;
     }
-    router.push(`/courses/${cid}/assignments`);
+
+    client
+      .fetchAssignmentById(aid)
+      .then((existing) => {
+        setAssignment({
+          ...baseAssignment,
+          ...existing,
+          course: cid,
+          points:
+            typeof existing?.points === "number"
+              ? existing.points
+              : baseAssignment.points,
+          dueDate: existing?.dueDate ?? "",
+          availableFromDate: existing?.availableFromDate ?? "",
+          availableUntilDate: existing?.availableUntilDate ?? "",
+          description: existing?.description ?? "",
+          title: existing?.title ?? baseAssignment.title,
+        });
+      })
+      .catch((e) => console.error(e));
+  }, [aid, cid]);
+
+  const handleSave = async () => {
+    try {
+      if (!canEdit) return;
+      if (aid) {
+        await client.updateAssignment(aid, assignment);
+      } else {
+        await client.createAssignmentForCourse(cid, assignment);
+      }
+
+      // Update redux for the list screen, and then navigate.
+      const fresh = await client.fetchAssignmentsForCourse(cid);
+      dispatch(setAssignments(fresh));
+      router.push(`/courses/${cid}/assignments`);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const handleCancel = () => {
@@ -54,6 +91,7 @@ export default function AssignmentEditor() {
             id="wd-name"
             type="text"
             value={assignment.title}
+            disabled={!canEdit}
             onChange={(e) =>
               setAssignment({ ...assignment, title: e.target.value })
             }
@@ -65,6 +103,7 @@ export default function AssignmentEditor() {
             id="wd-description"
             rows={10}
             value={assignment.description}
+            disabled={!canEdit}
             onChange={(e) =>
               setAssignment({ ...assignment, description: e.target.value })
             }
@@ -79,6 +118,7 @@ export default function AssignmentEditor() {
               id="wd-points"
               type="number"
               value={assignment.points}
+              disabled={!canEdit}
               onChange={(e) =>
                 setAssignment({
                   ...assignment,
@@ -93,7 +133,7 @@ export default function AssignmentEditor() {
             Assignment Group
           </FormLabel>
           <Col sm={9}>
-            <FormSelect id="wd-group">
+            <FormSelect id="wd-group" disabled={!canEdit}>
               <option>ASSIGNMENTS</option>
             </FormSelect>
           </Col>
@@ -103,7 +143,7 @@ export default function AssignmentEditor() {
             Display Grade as
           </FormLabel>
           <Col sm={9}>
-            <FormSelect id="wd-grade">
+            <FormSelect id="wd-grade" disabled={!canEdit}>
               <option>Percentage</option>
             </FormSelect>
           </Col>
@@ -114,7 +154,7 @@ export default function AssignmentEditor() {
           </FormLabel>
           <Col sm={9}>
             <div className="border p-3">
-              <FormSelect id="wd-type" className="mb-3">
+              <FormSelect id="wd-type" className="mb-3" disabled={!canEdit}>
                 <option>Online</option>
               </FormSelect>
               <FormLabel className="fw-bold mb-2">
@@ -125,6 +165,7 @@ export default function AssignmentEditor() {
                 id="wd-text-entry"
                 label="Text Entry"
                 className="mb-2"
+                disabled={!canEdit}
               />
               <FormCheck
                 type="checkbox"
@@ -132,23 +173,27 @@ export default function AssignmentEditor() {
                 label="Website URL"
                 className="mb-2"
                 defaultChecked
+                disabled={!canEdit}
               />
               <FormCheck
                 type="checkbox"
                 id="wd-media"
                 label="Media Recordings"
                 className="mb-2"
+                disabled={!canEdit}
               />
               <FormCheck
                 type="checkbox"
                 id="wd-annotation"
                 label="Student Annotation"
                 className="mb-2"
+                disabled={!canEdit}
               />
               <FormCheck
                 type="checkbox"
                 id="wd-file-uploads"
                 label="File Uploads"
+                disabled={!canEdit}
               />
             </div>
           </Col>
@@ -165,6 +210,7 @@ export default function AssignmentEditor() {
                   id="wd-assign-to"
                   type="text"
                   defaultValue="Everyone"
+                  disabled={!canEdit}
                 />
               </div>
               <div className="mb-3">
@@ -173,6 +219,7 @@ export default function AssignmentEditor() {
                   id="wd-due-date"
                   type="date"
                   value={assignment.dueDate}
+                  disabled={!canEdit}
                   onChange={(e) =>
                     setAssignment({ ...assignment, dueDate: e.target.value })
                   }
@@ -187,6 +234,7 @@ export default function AssignmentEditor() {
                     id="wd-available-from"
                     type="date"
                     value={assignment.availableFromDate}
+                    disabled={!canEdit}
                     onChange={(e) =>
                       setAssignment({
                         ...assignment,
@@ -201,6 +249,7 @@ export default function AssignmentEditor() {
                     id="wd-until"
                     type="date"
                     value={assignment.availableUntilDate}
+                    disabled={!canEdit}
                     onChange={(e) =>
                       setAssignment({
                         ...assignment,
@@ -222,13 +271,15 @@ export default function AssignmentEditor() {
           >
             Cancel
           </Button>
-          <Button
-            variant="danger"
-            onClick={handleSave}
-            id="wd-save-assignment-btn"
-          >
-            Save
-          </Button>
+          {canEdit && (
+            <Button
+              variant="danger"
+              onClick={handleSave}
+              id="wd-save-assignment-btn"
+            >
+              Save
+            </Button>
+          )}
         </div>
       </Form>
     </div>

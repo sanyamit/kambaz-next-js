@@ -2,7 +2,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../../store";
-import { deleteAssignment } from "./reducer";
+import { setAssignments } from "./reducer";
 import { ListGroup, ListGroupItem } from "react-bootstrap";
 import { BsGripVertical } from "react-icons/bs";
 import { SlNote } from "react-icons/sl";
@@ -11,9 +11,11 @@ import { FaTrash } from "react-icons/fa";
 import Link from "next/link";
 import AssignmentControlButtons from "./AssignmentControlButtons";
 import AssignmentsControls from "./assignmentControls";
+import * as client from "./client";
+import { useEffect } from "react";
 
 export default function Assignments() {
-  const { cid } = useParams();
+  const { cid } = useParams<{ cid: string }>();
   const router = useRouter();
   const dispatch = useDispatch();
   const { assignments } = useSelector(
@@ -30,9 +32,27 @@ export default function Assignments() {
       "Are you sure you want to remove this assignment?",
     );
     if (confirmed) {
-      dispatch(deleteAssignment(assignmentId));
+      client
+        .deleteAssignment(assignmentId)
+        .then(() => {
+          // Refresh from backend so the UI stays in sync.
+          if (!cid) return;
+          return client.fetchAssignmentsForCourse(cid);
+        })
+        .then((fresh) => {
+          if (fresh) dispatch(setAssignments(fresh));
+        })
+        .catch((e) => console.error(e));
     }
   };
+
+  useEffect(() => {
+    if (!cid) return;
+    client
+      .fetchAssignmentsForCourse(cid)
+      .then((fresh) => dispatch(setAssignments(fresh)))
+      .catch((e) => console.error(e));
+  }, [cid, dispatch]);
 
   return (
     <div>
