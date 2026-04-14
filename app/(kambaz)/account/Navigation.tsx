@@ -15,10 +15,22 @@ export default function AccountNavigation() {
       {links.map((link) => (
         <NavItem key={link}>
           <NavLink as={Link} href={link} active={pathname.endsWith(link)}>
-            {link}{" "}
-          </NavLink>{" "}
+            {link}
+          </NavLink>
         </NavItem>
       ))}
+  
+      {currentUser && currentUser.role === "ADMIN" && (
+        <NavItem>
+          <NavLink
+            as={Link}
+            href="/account/users"
+            active={pathname.endsWith("users")}
+          >
+            Users
+          </NavLink>
+        </NavItem>
+      )}
     </Nav>
   );
 }
