@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Row, Col, Card, CardImg, CardBody, CardTitle, CardText, Button, FormControl } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
-import { addNewCourse, deleteCourse, updateCourse, setCourses } from "../courses/reducer";
+import { addNewCourse, deleteCourse, setCourses } from "../courses/reducer";
 import { RootState } from "../store";
 import * as enrollmentsClient from "../enrollments/client";
 
@@ -55,8 +55,13 @@ export default function Dashboard() {
   };
 
   const onAddNewCourse = async () => {
-    const newCourse = await client.createCourse(course);
-    dispatch(setCourses([ ...courses, newCourse ]));
+    try {
+      await client.createCourse(course);
+      await fetchCourses();
+    } catch (e) {
+      console.error(e);
+      alert("Failed to create course. Check backend session/CORS and server logs.");
+    }
   };
 
   const onDeleteCourse = async (courseId: string) => {
@@ -65,11 +70,14 @@ export default function Dashboard() {
   };
 
   const onUpdateCourse = async () => {
-    await client.updateCourse(course);
-    dispatch(setCourses(courses.map((c) => {
-        if (c._id === course._id) { return course; }
-        else { return c; }
-    })));};
+    try {
+      await client.updateCourse(course);
+      await fetchCourses();
+    } catch (e) {
+      console.error(e);
+      alert("Failed to update course. Check backend session/CORS and server logs.");
+    }
+  };
 
 
   useEffect(() => {
@@ -115,13 +123,13 @@ export default function Dashboard() {
             <button
               className="btn btn-primary float-end"
               id="wd-add-new-course-click"
-              onClick={(onAddNewCourse) => dispatch(addNewCourse(course))}
+              onClick={onAddNewCourse}
             >
               Add
             </button>
             <button
               className="btn btn-warning float-end me-2"
-              onClick={(onUpdateCourse) => dispatch(updateCourse(course))}
+              onClick={onUpdateCourse}
               id="wd-update-course-click"
             >
               Update
